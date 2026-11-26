@@ -1,0 +1,70 @@
+name: CI
+
+# Checks of a pull request and of main: formatting, `cue vet`, `cue cmd generate`, the layout and
+# schema tests (`devenv test`), workflow lint. The generated catalog.json is kept as a run artifact.
+# Sending it to the other repositories comes later (meta decisions.md, 2026-11-26).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEVENV_VERSION: v2.4.0
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9 # v32.0.0
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: devenv # read-only: the public devenv cache, no auth token
+      - name: Install devenv
+        run: |
+          nix profile install --accept-flake-config --profile "$RUNNER_TEMP/devenv" "github:cachix/devenv/${DEVENV_VERSION}#devenv"
+          echo "$RUNNER_TEMP/devenv/bin" >> "$GITHUB_PATH"
+      # treefmt, cue vet, generate, layout, schema tests, shellcheck
+      - name: devenv test
+        run: devenv test
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: catalog
+          path: out/catalog.json
+          if-no-files-found: error
+
+  lint:
+    name: Lint workflows
+    permissions:
+      contents: read
+    uses: homelab-selfuryon/github-workflows/.github/workflows/lint-workflows.yaml@355d9b419dbbc6772aee02003b14ee1496122e98 # v1.1.1
+
+  # The single required status check (branch ruleset).
+  final-check:
+    needs: [test, lint]
+    if: always()
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Check results
+        run: |
+          for r in "test=$TEST" "lint=$LINT"; do
+            [[ "${r#*=}" == success ]] || { echo "$r"; exit 1; }
+          done
+        env:
+          TEST: ${{ needs.test.result }}
+          LINT: ${{ needs.lint.result }}
