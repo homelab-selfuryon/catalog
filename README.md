@@ -52,3 +52,19 @@ apps: "<app>": {
 devenv shell -- cue cmd generate     # out/catalog.json (git-ignored)
 devenv test                          # treefmt, cue vet, generate, layout, schema tests, shellcheck
 ```
+
+## After merge
+
+CI on `main` (`.github/workflows/ci.yaml`, job `sync`) sends the tested `catalog.json` to the
+repositories that read it, one PR each from the branch `catalog/sync`, and does not wait for any of
+them:
+
+| Repository            | File                 | Merge                                                                |
+| --------------------- | -------------------- | -------------------------------------------------------------------- |
+| `platform-terraform`  | `catalog.json`       | first, then `tofu apply` in `github/` and `openbao/`                 |
+| `platform-components` | `teams/catalog.json` | after the apply                                                      |
+| `gitops`              | `catalog.json`       | after the apply; also `{}` version files and CODEOWNERS (its `sync`) |
+
+The token comes from octo-sts (identity `catalog-sync`, policy in each repository's
+`.github/chainguard/`). A newer catalog updates the open PR; a manual run of the workflow on `main`
+resends the file.
