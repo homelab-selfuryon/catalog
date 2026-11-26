@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# What the schema must reject, and that a quota override works. Each case copies the repository to a
+# What the schema must reject, and what it derives. Each case copies the repository to a
 # temporary directory, adds one file and evaluates the catalog. Run from the repository root.
 set -euo pipefail
 
@@ -51,21 +51,16 @@ run "unknown environment" fail teams/notes/envs.cue \
 	'package notes
 apps: "notes-api": envs: ["staging", "qa"]'
 
-run "quota value that is not a quantity" fail teams/notes/quota.cue \
+run "a system setting in the catalog (quotas belong to platform-components)" fail teams/notes/quota.cue \
 	'package notes
-team: quota: staging: pods: "lots"'
-
-run "quota on a team without tenant namespaces" fail teams/platform/quota.cue \
-	'package platform
 team: quota: staging: pods: "10"'
 
-CHECK='.teams.notes.quota.staging.pods == "40" and .teams.notes.quota.prod.pods == "30"' \
-	run "quota override on top of the size" pass teams/notes/quota.cue \
+run "unknown lifecycle" fail teams/notes/lifecycle.cue \
 	'package notes
-team: quota: staging: pods: "40"'
+apps: "notes-api": lifecycle: "retired"'
 
-CHECK='.apps["notes-api"].preview == false' \
-	run "no preview environment, no previews" pass teams/notes/envs.cue \
+CHECK='.apps["notes-api"].envs == ["staging", "prod"]' \
+	run "an app without previews" pass teams/notes/envs.cue \
 	'package notes
 apps: "notes-api": envs: ["staging", "prod"]'
 

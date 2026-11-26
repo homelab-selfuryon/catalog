@@ -7,7 +7,7 @@ The org's teams and apps in CUE, generated into one `out/catalog.json` that `pla
 ## Layout
 
 ```
-schema/        #Catalog, #Team, #App, #Sizes (quota sizes), defaults
+schema/        #Catalog, #Team, #App, defaults
 teams/<team>/  team.cue + one <app>.cue per app, package <team>
 catalog.cue    imports every team package (aliased t_<team>), builds `catalog`
 views.cue      views.<repository>: the fields each reader reads (same paths as catalog)
@@ -27,8 +27,11 @@ devenv test                          # what CI runs
 
 ## Conventions
 
+- Only facts every repository must agree on (teams, apps, ownership, tier, lifecycle, envs,
+  cluster). A setting of one system (quotas, GitHub permission, roles) belongs in that system's
+  repository, as a default plus what one team needs (meta decisions.md, 2026-11-26).
 - A team directory holds data only; types and defaults live in `schema/`. Values a team must be
-  able to override are defaults (`*v | T`) in the schema.
+  able to set differently are defaults (`*v | T`) in the schema.
 - Adding a team: a directory, an import in `catalog.cue` (alias `t_<team>`: a field named like an
   import shadows it) and a `CODEOWNERS` line. `check-layout.sh` checks directories and imports agree.
 - A new rule the schema enforces gets a case in `scripts/test-schema.sh`.
