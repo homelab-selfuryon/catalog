@@ -12,7 +12,8 @@ schema/schema.cue        #Team, #App, quota sizes, defaults
 teams/<team>/team.cue    the team: description, size, quota overrides, GitHub permission
 teams/<team>/<app>.cue   one file per app: description, tier, lifecycle, environments
 catalog.cue              imports every team directory
-ext_tool.cue             cue cmd generate -> out/catalog.json (defaults resolved)
+views.cue                what each repository receives: only the fields it reads
+ext_tool.cue             cue cmd generate -> out/catalog.json, out/<repository>.json (views)
 scripts/                 check-layout.sh, test-schema.sh
 ```
 
@@ -49,15 +50,17 @@ apps: "<app>": {
 ## Commands
 
 ```sh
-devenv shell -- cue cmd generate     # out/catalog.json (git-ignored)
+devenv shell -- cue cmd generate     # out/catalog.json + out/<repository>.json (git-ignored)
+devenv shell -- cue export -e 'views.gitops'   # one view
 devenv test                          # treefmt, cue vet, generate, layout, schema tests, shellcheck
 ```
 
 ## After merge
 
-CI on `main` (`.github/workflows/ci.yaml`, job `sync`) sends the tested `catalog.json` to the
-repositories that read it, one PR each from the branch `catalog/sync`, and does not wait for any of
-them:
+CI on `main` (`.github/workflows/ci.yaml`, job `sync`) sends each repository that reads the catalog
+its view (`views.cue`: only the fields it reads, at the same paths as in `out/catalog.json`), one PR
+each from the branch `catalog/sync`, and does not wait for any of them. A change outside a
+repository's view opens no PR there (a quota change goes to `platform-components` only):
 
 | Repository            | File                 | Merge                                                                |
 | --------------------- | -------------------- | -------------------------------------------------------------------- |
