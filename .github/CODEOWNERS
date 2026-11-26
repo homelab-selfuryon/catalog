@@ -1,0 +1,10 @@
+# The last matching pattern wins. Rules from meta decisions.md (2026-11-26).
+
+# Everything: platform (schema, quota sizes, catalog.cue, scripts, workflows).
+*                          @homelab-selfuryon/platform
+
+# A team owns its directory: its apps, one file each. Add a line per team.
+/teams/notes/              @homelab-selfuryon/notes
+
+# team.cue holds the size and quota overrides: the platform approves them.
+/teams/*/team.cue          @homelab-selfuryon/platform
