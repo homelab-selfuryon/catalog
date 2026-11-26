@@ -23,10 +23,11 @@ views: {
 		}}
 	}
 
-	// registry.cue (Argo CD objects) and gitops_checks.py (version files, CODEOWNERS).
+	// registry.cue (Argo CD objects: only the environments in `envs`) and gitops_checks.py (version
+	// files, CODEOWNERS).
 	gitops: {
 		apps: {for n, a in catalog.apps {
-			(n): {team: a.team, repo: a.repo, cluster: a.cluster, preview: a.preview}
+			(n): {team: a.team, repo: a.repo, envs: a.envs, cluster: a.cluster, preview: a.preview}
 		}}
 	}
 }
