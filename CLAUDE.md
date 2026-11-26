@@ -10,7 +10,9 @@ The org's teams and apps in CUE, generated into one `out/catalog.json` that `pla
 schema/        #Catalog, #Team, #App, #Sizes (quota sizes), defaults
 teams/<team>/  team.cue + one <app>.cue per app, package <team>
 catalog.cue    imports every team package (aliased t_<team>), builds `catalog`
-ext_tool.cue   cue cmd generate -> out/catalog.json
+views.cue      views.<repository>: the fields each reader reads (same paths as catalog)
+ext_tool.cue   cue cmd generate -> out/catalog.json + out/<repository>.json
+.github/       workflows/ci.yaml (tests; on main, job `sync` opens the `catalog/sync` PRs)
 scripts/       check-layout.sh (directories = imports, one file per app), test-schema.sh (rejections)
 ```
 
@@ -30,6 +32,9 @@ devenv test                          # what CI runs
 - Adding a team: a directory, an import in `catalog.cue` (alias `t_<team>`: a field named like an
   import shadows it) and a `CODEOWNERS` line. `check-layout.sh` checks directories and imports agree.
 - A new rule the schema enforces gets a case in `scripts/test-schema.sh`.
+- A repository receives its view, never the whole catalog. A field it starts to read goes into
+  `views.cue` first; a new reader gets a view, a `sync` matrix entry and `catalog-sync.sts.yaml` in
+  its `.github/chainguard/`.
 - Changing what `catalog.json` carries changes what the other repositories receive: render or plan
   them before and after (no diff unless intended).
 - Public repository: no secrets, no e-mail addresses, no member lists.
