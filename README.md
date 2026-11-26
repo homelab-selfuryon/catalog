@@ -1,15 +1,19 @@
 # catalog
 
-Teams and apps of the `homelab-selfuryon` org, declared once. Everything a team or an app needs in
-the other repositories — the GitHub team, repositories and environments, OpenBao roles, namespaces
-and quotas, Argo CD registration, `CODEOWNERS` lines — is generated from here. Decision and contract:
-`meta/decisions.md` (2026-11-26), `meta/delivery.md` ("Catalog"), card `meta/catalog.md`.
+Teams and apps of the `homelab-selfuryon` org, declared once: the facts every repository must agree
+on — which teams and apps exist, who owns what, how critical an app is (`tier`), where it is in its
+life (`lifecycle`), which environments it has and where it runs. From them the other repositories
+build what a team or an app gets by default — the GitHub team, repositories and environments, OpenBao
+roles, namespaces and quotas, Argo CD objects, `CODEOWNERS` lines — and set there whatever one team or
+app needs beyond that (a bigger quota, another GitHub permission). Settings of one system never live
+here. Decision and contract: `meta/decisions.md` (2026-11-26), `meta/delivery.md` ("Catalog"), card
+`meta/catalog.md`.
 
 ## Layout
 
 ```
-schema/schema.cue        #Team, #App, quota sizes, defaults
-teams/<team>/team.cue    the team: description, size, quota overrides, GitHub permission
+schema/schema.cue        #Team, #App, defaults
+teams/<team>/team.cue    the team: description (tenant: false for a team without namespaces)
 teams/<team>/<app>.cue   one file per app: description, tier, lifecycle, environments
 catalog.cue              imports every team directory
 views.cue                what each repository receives: only the fields it reads
@@ -24,10 +28,7 @@ scripts/                 check-layout.sh, test-schema.sh
    ```cue
    package <team>
 
-   team: {
-   	description: "What the team does"
-   	size:        "small" // small | medium | large; single quota values can be overridden
-   }
+   team: description: "What the team does"
    ```
 
 2. One import in `catalog.cue` and a line in `_teams`.
@@ -48,6 +49,10 @@ apps: "<app>": {
 }
 ```
 
+Its quotas, GitHub permission and the like are not set here: a team that needs more than the default
+gets it in the repository of that system (`platform-components` `teams/<team>.cue`,
+`platform-terraform` `github/locals.tf`).
+
 ## Commands
 
 ```sh
@@ -61,7 +66,7 @@ devenv test                          # treefmt, cue vet, generate, layout, schem
 CI on `main` (`.github/workflows/ci.yaml`, job `sync`) sends each repository that reads the catalog
 its view (`views.cue`: only the fields it reads, at the same paths as in `out/catalog.json`), one PR
 each from the branch `catalog/sync`, and does not wait for any of them. A change outside a
-repository's view opens no PR there (a quota change goes to `platform-components` only):
+repository's view opens no PR there (a new app's tier goes to `platform-terraform` only):
 
 | Repository            | File                 | Merge                                                                |
 | --------------------- | -------------------- | -------------------------------------------------------------------- |

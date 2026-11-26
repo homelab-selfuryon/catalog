@@ -4,8 +4,7 @@ package platform
 
 team: {
 	description: "Platform team: clusters, platform components, paved road, org configuration"
-	github: permission: "admin"
-	tenant: false
+	tenant:      false
 }
 
 apps: {}

@@ -5,29 +5,23 @@ package catalog
 // and CI sends it there (job `sync`). A field a repository starts to read is added here first;
 // a change that touches no view field opens no PR in that repository.
 views: {
-	// github/ (teams.tf, repositories.tf, properties.tf: every team is an `owner-team` value)
-	// and openbao/ (roles per app and environment).
+	// github/ (teams, repositories with their properties and environments) and openbao/ (roles per
+	// app and environment).
 	"platform-terraform": {
-		teams: {for n, t in catalog.teams {
-			(n): {description: t.description, github: permission: t.github.permission}
-		}}
+		teams: {for n, t in catalog.teams {(n): description: t.description}}
 		apps: {for n, a in catalog.apps {
 			(n): {team: a.team, description: a.description, tier: a.tier, lifecycle: a.lifecycle, envs: a.envs}
 		}}
 	}
 
-	// teams/catalog.cue: tenant teams get namespaces, quotas, RBAC and AppProjects.
+	// teams/catalog.cue: every tenant team becomes a team with the platform's defaults.
 	"platform-components": {
-		teams: {for n, t in catalog.teams if t.tenant {
-			(n): {tenant: true, quota: t.quota}
-		}}
+		teams: {for n, t in catalog.teams if t.tenant {(n): tenant: true}}
 	}
 
-	// registry.cue (Argo CD objects: only the environments in `envs`) and gitops_checks.py (version
+	// registry.cue (Argo CD objects for the environments in `envs`) and gitops_checks.py (version
 	// files, CODEOWNERS).
 	gitops: {
-		apps: {for n, a in catalog.apps {
-			(n): {team: a.team, repo: a.repo, envs: a.envs, cluster: a.cluster, preview: a.preview}
-		}}
+		apps: {for n, a in catalog.apps {(n): {team: a.team, envs: a.envs, cluster: a.cluster}}}
 	}
 }
