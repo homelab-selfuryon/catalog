@@ -3,8 +3,9 @@
 # Everything: platform (schema, quota sizes, catalog.cue, scripts, workflows).
 *                          @homelab-selfuryon/platform
 
-# A team owns its directory: its apps, one file each. Add a line per team.
+# A team owns its directory: its apps, one file each. A line per team (scripts/check-layout.sh).
 /teams/notes/              @homelab-selfuryon/notes
+/teams/platform/           @homelab-selfuryon/platform
 
 # team.cue holds the size and quota overrides: the platform approves them.
 /teams/*/team.cue          @homelab-selfuryon/platform

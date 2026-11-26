@@ -31,7 +31,8 @@ scripts/                 check-layout.sh, test-schema.sh
    ```
 
 2. One import in `catalog.cue` and a line in `_teams`.
-3. A `/teams/<team>/` line in `.github/CODEOWNERS`.
+3. A `/teams/<team>/` line in `.github/CODEOWNERS`, above the `team.cue` rule (`check-layout.sh` checks
+   it). The team gets `push` here with the GitHub team (platform-terraform), so it opens its own PRs.
 
 ## A new app
 

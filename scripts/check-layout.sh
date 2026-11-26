@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # The directories under teams/ and the teams in catalog.cue agree, and each team directory holds
-# team.cue plus one <app>.cue per app of that team. Run from the repository root.
+# team.cue plus one <app>.cue per app of that team, and .github/CODEOWNERS gives each team its
+# directory, before the team.cue rule (the last match wins). Run from the repository root.
 set -euo pipefail
 
 catalog=$(cue export -e catalog --out json)
 status=0
+owners_team_cue=$(grep -nF '/teams/*/team.cue' .github/CODEOWNERS | cut -d: -f1)
+[[ -n "$owners_team_cue" ]] || { echo ".github/CODEOWNERS: no '/teams/*/team.cue' rule"; exit 1; }
 
 dirs=$(find teams -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
 teams=$(jq -r '.teams | keys[]' <<<"$catalog" | sort)
@@ -24,6 +27,14 @@ for t in $dirs; do
 	if [[ "$files" != "$apps" ]]; then
 		echo "teams/$t: one <app>.cue per app (files < > apps):"
 		diff <(echo "$files") <(echo "$apps") || true
+		status=1
+	fi
+	line=$(grep -nE "^/teams/${t}/[[:space:]]+@homelab-selfuryon/${t}\$" .github/CODEOWNERS | cut -d: -f1 || true)
+	if [[ -z "$line" ]]; then
+		echo ".github/CODEOWNERS: no '/teams/$t/ @homelab-selfuryon/$t' line"
+		status=1
+	elif [[ "$line" -gt "$owners_team_cue" ]]; then
+		echo ".github/CODEOWNERS: '/teams/$t/' must come before '/teams/*/team.cue'"
 		status=1
 	fi
 done
