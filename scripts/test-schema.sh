@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # What the schema must reject, and what it derives. Each case copies the repository to a
-# temporary directory, adds one file and evaluates the catalog. Run from the repository root.
+# temporary directory, adds one file to the teams package and evaluates the catalog. Run from the repository root.
 set -euo pipefail
 
 root=$PWD
@@ -30,38 +30,45 @@ run() {
 	rm -rf "$tmp"
 }
 
-run "app of a team without tenant namespaces" fail teams/platform/tool.cue \
-	'package platform
-apps: tool: description: "x"'
+run "app of a team without tenant namespaces" fail teams/case.cue \
+	'package teams
+platform: apps: tool: description: "x"'
 
-run "one app in two teams" fail teams/platform/notes-api.cue \
-	'package platform
-team: tenant: true
-apps: "notes-api": description: "x"'
+run "one app in two teams" fail teams/case.cue \
+	'package teams
+platform: {team: tenant: true, apps: "notes-api": description: "x"}'
 
-run "app without a description" fail teams/notes/bare.cue \
-	'package notes
-apps: bare: {}'
+run "app without a description" fail teams/case.cue \
+	'package teams
+notes: apps: bare: {}'
 
-run "unknown tier" fail teams/notes/tier.cue \
-	'package notes
-apps: "notes-api": tier: "tier-0"'
+run "unknown tier" fail teams/case.cue \
+	'package teams
+notes: apps: "notes-api": tier: "tier-0"'
 
-run "unknown environment" fail teams/notes/envs.cue \
-	'package notes
-apps: "notes-api": envs: ["staging", "qa"]'
+run "unknown environment" fail teams/case.cue \
+	'package teams
+notes: apps: "notes-api": envs: ["staging", "qa"]'
 
-run "a system setting in the catalog (quotas belong to platform-components)" fail teams/notes/quota.cue \
-	'package notes
-team: quota: staging: pods: "10"'
+run "a system setting in the catalog (quotas belong to platform-components)" fail teams/case.cue \
+	'package teams
+notes: team: quota: staging: pods: "10"'
 
-run "unknown lifecycle" fail teams/notes/lifecycle.cue \
-	'package notes
-apps: "notes-api": lifecycle: "retired"'
+run "unknown lifecycle" fail teams/case.cue \
+	'package teams
+notes: apps: "notes-api": lifecycle: "retired"'
+
+run "a misspelt field in a team file" fail teams/case.cue \
+	'package teams
+notes: app: "notes-api": tier: "tier-2"'
+
+run "a team without its description" fail teams/case.cue \
+	'package teams
+search: apps: "search-api": description: "x"'
 
 CHECK='.apps["notes-api"].envs == ["staging", "prod"]' \
-	run "an app without previews" pass teams/notes/envs.cue \
-	'package notes
-apps: "notes-api": envs: ["staging", "prod"]'
+	run "an app without previews" pass teams/case.cue \
+	'package teams
+notes: apps: "notes-api": envs: ["staging", "prod"]'
 
 exit "$status"

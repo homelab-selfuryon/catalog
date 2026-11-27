@@ -8,12 +8,12 @@ The org's teams and apps in CUE, generated into one `out/catalog.json` that `pla
 
 ```
 schema/        #Catalog, #Team, #App, defaults
-teams/<team>/  team.cue + one <app>.cue per app, package <team>
-catalog.cue    imports every team package (aliased t_<team>), builds `catalog`
+teams/         one <team>.cue per team (the team and its apps), package teams
+catalog.cue    builds `catalog` from the teams package
 views.cue      views.<repository>: the fields each reader reads (same paths as catalog)
 ext_tool.cue   cue cmd generate -> out/catalog.json + out/<repository>.json
 .github/       workflows/ci.yaml (tests; on main, job `sync` opens the `catalog/sync` PRs)
-scripts/       check-layout.sh (directories = imports, one file per app), test-schema.sh (rejections)
+scripts/       check-layout.sh (a file per team, its own team only; CODEOWNERS), test-schema.sh (rejections)
 ```
 
 ## Commands
@@ -30,10 +30,10 @@ devenv test                          # what CI runs
 - Only facts every repository must agree on (teams, apps, ownership, tier, lifecycle, envs,
   cluster). A setting of one system (quotas, GitHub permission, roles) belongs in that system's
   repository, as a default plus what one team needs (meta decisions.md, 2026-11-26).
-- A team directory holds data only; types and defaults live in `schema/`. Values a team must be
+- A team file holds data only; types and defaults live in `schema/`. Values a team must be
   able to set differently are defaults (`*v | T`) in the schema.
-- Adding a team: a directory, an import in `catalog.cue` (alias `t_<team>`: a field named like an
-  import shadows it) and a `CODEOWNERS` line. `check-layout.sh` checks directories and imports agree.
+- Adding a team: `teams/<team>.cue` and a `CODEOWNERS` line. `check-layout.sh` checks that a file
+  holds only its own team (CODEOWNERS is per file, so a team must not add apps to another).
 - A new rule the schema enforces gets a case in `scripts/test-schema.sh`.
 - A repository receives its view, never the whole catalog. A field it starts to read goes into
   `views.cue` first; a new reader gets a view, a `sync` matrix entry and `catalog-sync.sts.yaml` in

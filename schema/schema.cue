@@ -1,7 +1,7 @@
 // Package schema types the catalog: the facts about the org that every repository must agree on —
 // which teams and apps exist, who owns what, how critical an app is and where it runs. How a system
 // implements a fact (GitHub permissions, quotas, roles) is that system's, in its own repository
-// (meta decisions.md, 2026-11-26). A team directory says only how it differs from the defaults;
+// (meta decisions.md, 2026-11-26). A team file says only how it differs from the defaults;
 // `catalog.json` carries every value resolved.
 package schema
 
