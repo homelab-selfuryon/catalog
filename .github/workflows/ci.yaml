@@ -56,7 +56,7 @@ jobs:
     name: Lint workflows
     permissions:
       contents: read
-    uses: homelab-selfuryon/github-workflows/.github/workflows/lint-workflows.yaml@355d9b419dbbc6772aee02003b14ee1496122e98 # v1.1.1
+    uses: homelab-selfuryon/github-workflows/.github/workflows/lint-workflows.yaml@e7d5b1ed978b67aa2becd08d15d89537d11ec979 # v1.1.2
 
   # One PR per repository that reads the catalog. The token comes from octo-sts, identity
   # `catalog-sync`, whose policy lives in that repository (.github/chainguard/catalog-sync.sts.yaml)
