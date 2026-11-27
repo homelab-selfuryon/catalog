@@ -13,9 +13,9 @@ here. Decision and contract: `meta/decisions.md` (2026-11-26), `meta/delivery.md
 
 ```
 schema/schema.cue        #Team, #App, defaults
-teams/<team>/team.cue    the team: description (tenant: false for a team without namespaces)
-teams/<team>/<app>.cue   one file per app: description, tier, lifecycle, environments
-catalog.cue              imports every team directory
+teams/<team>.cue         one file per team: the team (description; tenant: false for a team
+                         without namespaces) and its apps (description, tier, lifecycle, environments)
+catalog.cue              builds the catalog from teams/
 views.cue                what each repository receives: only the fields it reads
 ext_tool.cue             cue cmd generate -> out/catalog.json, out/<repository>.json (views)
 scripts/                 check-layout.sh, test-schema.sh
@@ -23,29 +23,33 @@ scripts/                 check-layout.sh, test-schema.sh
 
 ## A new team
 
-1. `teams/<team>/team.cue`:
+1. `teams/<team>.cue`:
 
    ```cue
-   package <team>
+   package teams
 
-   team: description: "What the team does"
+   <team>: team: description: "What the team does"
    ```
 
-2. One import in `catalog.cue` and a line in `_teams`.
-3. A `/teams/<team>/` line in `.github/CODEOWNERS`, above the `team.cue` rule (`check-layout.sh` checks
-   it). The team gets `push` here with the GitHub team (platform-terraform), so it opens its own PRs.
+2. A `/teams/<team>.cue` line in `.github/CODEOWNERS` (`check-layout.sh` checks it): from then on the
+   team owns its file. The team gets `push` here with the GitHub team (platform-terraform), so it
+   opens its own PRs.
 
 ## A new app
 
-`teams/<team>/<app>.cue`; everything but the description has a default:
+An entry under `apps` in the team's file; everything but the description has a default:
 
 ```cue
-package <team>
+package teams
 
-apps: "<app>": {
-	description: "What the app does"
-	tier:        "tier-3"             // tier-1 | tier-2 | tier-3
-	envs: ["preview", "staging", "prod"] // previews only with "preview"
+<team>: {
+	team: description: "What the team does"
+
+	apps: "<app>": {
+		description: "What the app does"
+		tier:        "tier-3"                // tier-1 | tier-2 | tier-3
+		envs: ["preview", "staging", "prod"] // previews only with "preview"
+	}
 }
 ```
 

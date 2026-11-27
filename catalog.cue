@@ -1,19 +1,20 @@
-// Package catalog collects every team directory into one catalog. Adding a team means a directory
-// under teams/ and one import here (scripts/check-layout.sh makes sure the two agree).
+// Package catalog builds the catalog from teams/: one file per team, `teams/<team>.cue`, holding
+// the team and its apps (scripts/check-layout.sh checks that each file holds only its own team).
 package catalog
 
 import (
 	"github.com/homelab-selfuryon/catalog/schema"
-
-	t_notes "github.com/homelab-selfuryon/catalog/teams/notes"
-	t_platform "github.com/homelab-selfuryon/catalog/teams/platform"
+	"github.com/homelab-selfuryon/catalog/teams"
 )
 
-// Keyed by the directory name.
-_teams: {
-	notes:    {team: t_notes.team, apps: t_notes.apps}
-	platform: {team: t_platform.team, apps: t_platform.apps}
+// What a team file holds; the schema types the values.
+#TeamFile: {
+	team!: {...}
+	apps: [string]: {...}
 }
+
+_teams: [string]: #TeamFile
+_teams: teams
 
 catalog: schema.#Catalog & {
 	teams: {for k, t in _teams {(k): t.team}}
